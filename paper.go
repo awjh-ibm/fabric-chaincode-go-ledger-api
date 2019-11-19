@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-
-	ledgerapi "github.com/awjh-ibm/fabric-chaincode-go-ledger-api/ledger-api"
 )
 
 type commercialPaperState uint
@@ -34,8 +32,8 @@ type jsonCommercialPaper struct {
 
 // CommercialPaper defines a commercial paper
 type CommercialPaper struct {
-	PaperNumber      string `json:"paperNumber"`
-	Issuer           string `json:"issuer"`
+	Issuer           string `ledgerapi:"primary_key" json:"issuer"`
+	PaperNumber      string `ledgerapi:"primary_key" json:"paperNumber"`
 	IssueDateTime    string `json:"issueDateTime"`
 	FaceValue        int    `json:"faceValue"`
 	MaturityDateTime string `json:"maturityDateTime"`
@@ -45,6 +43,7 @@ type CommercialPaper struct {
 
 // UnmarshalJSON special handler for managing JSON marshalling
 func (cp *CommercialPaper) UnmarshalJSON(data []byte) error {
+
 	jcp := jsonCommercialPaper{commercialPaperAlias: (*commercialPaperAlias)(cp)}
 
 	err := json.Unmarshal(data, &jcp)
@@ -59,10 +58,12 @@ func (cp *CommercialPaper) UnmarshalJSON(data []byte) error {
 }
 
 // MarshalJSON special handler for managing JSON marshalling
-func (cp *CommercialPaper) MarshalJSON() ([]byte, error) {
-	jcp := jsonCommercialPaper{commercialPaperAlias: (*commercialPaperAlias)(cp), State: cp.state}
+func (cp CommercialPaper) MarshalJSON() ([]byte, error) {
+	jcp := jsonCommercialPaper{commercialPaperAlias: (*commercialPaperAlias)(&cp), State: cp.state}
 
-	return json.Marshal(&jcp)
+	bytes, err := json.Marshal(&jcp)
+
+	return bytes, err
 }
 
 // GetState returns the state

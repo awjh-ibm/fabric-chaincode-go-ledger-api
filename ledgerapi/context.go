@@ -1,7 +1,7 @@
 package ledgerapi
 
 import (
-	"github.com/awjh-ibm/fabric-chaincode-go/contractapi"
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
 // TransactionContextInterface describes functions of transaction context

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/awjh-ibm/fabric-chaincode-go/contractapi"
-	ledgerapi "github.com/awjh-ibm/fabric-chaincode-go-ledger-api/ledger-api"
+	"github.com/awjh-ibm/fabric-contract-api-go-ledger-api/ledgerapi"
+	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
 // Contract chaincode that defines
@@ -24,7 +24,7 @@ func (c *Contract) Issue(ctx ledgerapi.TransactionContextInterface, issuer strin
 	paper := CommercialPaper{PaperNumber: paperNumber, Issuer: issuer, IssueDateTime: issueDateTime, FaceValue: faceValue, MaturityDateTime: maturityDateTime, Owner: issuer}
 	paper.SetIssued()
 
-	err := ctx.GetPaperList().AddPaper(&paper)
+	err := ctx.GetLedger().GetDefaultCollection().Add(paper)
 
 	if err != nil {
 		return nil, err
@@ -35,7 +35,9 @@ func (c *Contract) Issue(ctx ledgerapi.TransactionContextInterface, issuer strin
 
 // Buy updates a commercial paper to be in trading status and sets the new owner
 func (c *Contract) Buy(ctx ledgerapi.TransactionContextInterface, issuer string, paperNumber string, currentOwner string, newOwner string) (*CommercialPaper, error) {
-	paper, err := ctx.GetPaperList().GetPaper(issuer, paperNumber)
+	paper := new(CommercialPaper)
+
+	err := ctx.GetLedger().GetDefaultCollection().Get(paper, issuer, paperNumber)
 
 	if err != nil {
 		return nil, err
@@ -55,7 +57,7 @@ func (c *Contract) Buy(ctx ledgerapi.TransactionContextInterface, issuer string,
 
 	paper.Owner = newOwner
 
-	err = ctx.GetPaperList().UpdatePaper(paper)
+	err = ctx.GetLedger().GetDefaultCollection().Update(paper)
 
 	if err != nil {
 		return nil, err
@@ -66,7 +68,9 @@ func (c *Contract) Buy(ctx ledgerapi.TransactionContextInterface, issuer string,
 
 // Redeem updates a commercial paper status to be redeemed
 func (c *Contract) Redeem(ctx ledgerapi.TransactionContextInterface, issuer string, paperNumber string, redeemingOwner string) (*CommercialPaper, error) {
-	paper, err := ctx.GetPaperList().GetPaper(issuer, paperNumber)
+	paper := new(CommercialPaper)
+
+	err := ctx.GetLedger().GetDefaultCollection().Get(paper, issuer, paperNumber)
 
 	if err != nil {
 		return nil, err
@@ -83,11 +87,41 @@ func (c *Contract) Redeem(ctx ledgerapi.TransactionContextInterface, issuer stri
 	paper.Owner = paper.Issuer
 	paper.SetRedeemed()
 
-	err = ctx.GetPaperList().UpdatePaper(paper)
+	err = ctx.GetLedger().GetDefaultCollection().Update(paper)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return paper, nil
+}
+
+// GetPaperTransfers returns the array of transaction IDs of when transfers happened to the paper
+func (c *Contract) GetPaperTransfers(ctx ledgerapi.TransactionContextInterface, issuer string, paperNumber string) ([]string, error) {
+	history := []string{}
+
+	it, err := ctx.GetLedger().GetDefaultCollection().GetHistory(issuer, paperNumber)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer it.Close()
+	for it.HasNext() {
+		nxt, _ := it.Next()
+
+		paper := new(CommercialPaper)
+
+		err := nxt.GetValue(paper)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if paper.IsTrading() {
+			history = append(history, nxt.GetTxID())
+		}
+	}
+
+	return history, nil
 }

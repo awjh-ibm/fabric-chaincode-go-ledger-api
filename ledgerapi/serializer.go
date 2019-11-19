@@ -1,6 +1,8 @@
 package ledgerapi
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // LedgerSerializerInterface defines the functions a valid ledger serializer
 // should have. Serialzers to be used by a chaincode must implement
@@ -29,5 +31,7 @@ func (jls *JSONLedgerSerializer) FromBytes(bytes []byte, v interface{}) error {
 
 // ToBytes alias for encoding/json's json.Marshal
 func (jls *JSONLedgerSerializer) ToBytes(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
+	bytes, err := json.Marshal(v)
+
+	return bytes, err
 }

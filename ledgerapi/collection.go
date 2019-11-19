@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/hyperledger/fabric-chaincode-go/shim"
 )
 
 // WorldStateIdentifier the identifier for the world state collection
@@ -18,6 +18,7 @@ type CollectionInterface interface {
 	Exists(...string) (bool, error)
 	Add(interface{}) error
 	Get(interface{}, ...string) error
+	GetHistory(...string) (HistoryQueryIteratorInterface, error)
 	Update(interface{}) error
 	Delete(...string) error
 }
@@ -42,6 +43,7 @@ func (c *Collection) generateKey(entry interface{}) ([]string, error) {
 
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
+		val = reflect.ValueOf(entry).Elem()
 	}
 
 	keyParts := []string{}
@@ -157,7 +159,7 @@ func (c *Collection) Get(entry interface{}, keyComponents ...string) error {
 	key, err := c.formatKey(keyComponents)
 
 	if err != nil {
-		return fmt.Errorf("Failed to read from collection. %s", err.Error())
+		return fmt.Errorf("Failed to get from collection. %s", err.Error())
 	}
 
 	var bytes []byte
@@ -181,6 +183,34 @@ func (c *Collection) Get(entry interface{}, keyComponents ...string) error {
 	}
 
 	return nil
+}
+
+// GetHistory returns an iterator of historic data for the key. Only available for world
+// state collection
+func (c *Collection) GetHistory(keyComponents ...string) (HistoryQueryIteratorInterface, error) {
+	key, err := c.formatKey(keyComponents)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get history from collection. %s", err.Error())
+	}
+
+	var shqi shim.HistoryQueryIteratorInterface
+
+	if c.Name != WorldStateIdentifier {
+		return nil, fmt.Errorf("Failed to get history from collection. %s", "Historic data does not exist for non world state collections")
+	}
+
+	shqi, err = c.Stub.GetHistoryForKey(key)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get history from collection. %s", err.Error())
+	}
+
+	hqi := new(HistoryQueryIterator)
+	hqi.Serializer = c.Serializer
+	hqi.Iterator = shqi
+
+	return hqi, nil
 }
 
 // Update updates an existing version of the state in the ledger in the collection
