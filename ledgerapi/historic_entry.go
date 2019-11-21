@@ -29,31 +29,13 @@ type HistoryQueryIteratorInterface interface {
 // HistoricEntryInterface
 type HistoricEntry struct {
 	Serializer LedgerSerializerInterface
-	KeyValue   *queryresult.KeyModification
-}
-
-// GetTxID returns the transaction ID for this
-// historic snapshot
-func (he *HistoricEntry) GetTxID() string {
-	return he.KeyValue.GetTxId()
-}
-
-// GetTimeStamp returns the timestamp for this
-// historic snapshot
-func (he *HistoricEntry) GetTimeStamp() *timestamp.Timestamp {
-	return he.KeyValue.GetTimestamp()
-}
-
-// GetIsDelete returns true if the snapshot is when
-// the key was deleted from the world state
-func (he *HistoricEntry) GetIsDelete() bool {
-	return he.KeyValue.GetIsDelete()
+	*queryresult.KeyModification
 }
 
 // GetValue deserializes the value from the historic
 // snapshot into the provided interface
 func (he *HistoricEntry) GetValue(v interface{}) error {
-	bytes := he.KeyValue.GetValue()
+	bytes := he.KeyModification.GetValue()
 
 	return he.Serializer.FromBytes(bytes, v)
 }
@@ -88,7 +70,7 @@ func (hqi *HistoryQueryIterator) Next() (*HistoricEntry, error) {
 	}
 
 	he := new(HistoricEntry)
-	he.KeyValue = keymod
+	he.KeyModification = keymod
 
 	return he, nil
 }

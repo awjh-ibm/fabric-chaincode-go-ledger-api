@@ -119,7 +119,7 @@ func (c *Contract) GetPaperTransfers(ctx ledgerapi.TransactionContextInterface, 
 		}
 
 		if paper.IsTrading() {
-			history = append(history, nxt.GetTxID())
+			history = append(history, nxt.GetTxId())
 		}
 	}
 
