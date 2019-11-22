@@ -1,8 +1,6 @@
 package ledgerapi
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 // LedgerSerializerInterface defines the functions a valid ledger serializer
 // should have. Serialzers to be used by a chaincode must implement

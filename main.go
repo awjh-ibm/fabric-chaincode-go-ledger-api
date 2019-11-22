@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/awjh-ibm/fabric-contract-api-go-ledger-api/ledgerapi"
 	"github.com/hyperledger/fabric-chaincode-go/shimtest"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -37,7 +36,6 @@ func submitTransaction(stub *shimtest.MockStub, txID string, funcName string, pa
 
 func main() {
 	contract := new(Contract)
-	contract.TransactionContextHandler = new(ledgerapi.TransactionContext)
 	contract.Name = "org.papernet.commercialpaper"
 	contract.Info.Version = "0.0.1"
 
@@ -60,22 +58,15 @@ func main() {
 		return
 	}
 
-	fmt.Println("=========== BUY ===========")
-	err = submitTransaction(stub, "TX2", "Buy", "MAGNETOCORP", "0001", "MAGNETOCORP", "DIGIBANK")
+	// fmt.Println("=========== BUY ===========")
+	// err = submitTransaction(stub, "TX2", "Buy", "MAGNETOCORP", "0001", "MAGNETOCORP", "DIGIBANK")
 
-	if err != nil {
-		return
-	}
+	// if err != nil {
+	// 	return
+	// }
 
-	fmt.Println("=========== REDEEM ===========")
-	err = submitTransaction(stub, "TX3", "Redeem", "MAGNETOCORP", "0001", "DIGIBANK")
-
-	if err != nil {
-		return
-	}
-
-	// fmt.Println("=========== HISTORY ===========")
-	// err = submitTransaction(stub, "TX4", "GetPaperTransfers", "MAGNETOCORP", "0001")
+	// fmt.Println("=========== REDEEM ===========")
+	// err = submitTransaction(stub, "TX3", "Redeem", "MAGNETOCORP", "0001", "DIGIBANK")
 
 	// if err != nil {
 	// 	return

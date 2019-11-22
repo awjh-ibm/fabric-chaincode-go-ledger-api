@@ -32,13 +32,19 @@ type jsonCommercialPaper struct {
 
 // CommercialPaper defines a commercial paper
 type CommercialPaper struct {
-	Issuer           string `ledgerapi:"primary_key" json:"issuer"`
-	PaperNumber      string `ledgerapi:"primary_key" json:"paperNumber"`
+	Issuer           string `json:"issuer"`
+	PaperNumber      string `json:"paperNumber"`
 	IssueDateTime    string `json:"issueDateTime"`
 	FaceValue        int    `json:"faceValue"`
 	MaturityDateTime string `json:"maturityDateTime"`
 	Owner            string `json:"owner"`
 	state            string `metadata:"state"`
+}
+
+// SimpleCommercialPaper defines paired down version of the paper
+type SimpleCommercialPaper struct {
+	Issuer           string `json:"issuer"`
+	PaperNumber      string `json:"paperNumber"`
 }
 
 // UnmarshalJSON special handler for managing JSON marshalling
