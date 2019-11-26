@@ -2,59 +2,44 @@ package ledgerapi
 
 import "github.com/hyperledger/fabric-contract-api-go/contractapi"
 
+// WorldStateCollection identifier of the world state collection
 const WorldStateCollection string = "worldstate"
 
+// Collection representation of db
 type Collection struct {
-	Name       string
-	Ctx        contractapi.TransactionContextInterface
-	Serializer LedgerSerializerInterface
+	Name string
+	Ctx  contractapi.TransactionContextInterface
 }
 
-func (c *Collection) GetState(key string, v interface{}) error {
-	// returns error when state doesnt exist
-	return nil
+// GetState return interface for accessing entry to db
+func (c *Collection) GetState(key string) StateInterface {
+	bs := new(BasicState)
+	bs.Ctx = c.Ctx
+	bs.Key = key
+	bs.Collection = c.Name
+
+	return bs
 }
 
-func (c *Collection) GetStateByRange(start, end string) (*EntryIterator, error) {
-	it := new(EntryIterator)
-	it.Serializer = c.Serializer
-	it.StateQueryIteratorInterface, _ = c.Ctx.GetStub().GetStateByRange(start, end) // or private
+// PutState write value to collection
+func (c *Collection) PutState(key string, data []byte) error {
+	if c.Name != WorldStateCollection {
+		return c.Ctx.GetStub().PutPrivateData(c.Name, key, data)
+	}
 
-	return it, nil
+	return c.Ctx.GetStub().PutState(key, data)
 }
 
-func (c *Collection) GetStateByPartialCompositeKey(objectType string, attributes []string) (*EntryIterator, error) {
-	it := new(EntryIterator)
-	it.Serializer = c.Serializer
-	it.StateQueryIteratorInterface, _ = c.Ctx.GetStub().GetStateByPartialCompositeKey(objectType, attributes) // or private
+// DeleteState deletes value from collection
+func (c *Collection) DeleteState(key string) error {
+	if c.Name != WorldStateCollection {
+		return c.Ctx.GetStub().DelPrivateData(c.Name, key)
+	}
 
-	return it, nil
+	return c.Ctx.GetStub().DelState(key)
 }
 
-func (c *Collection) GetQueryResult(query string) (*EntryIterator, error) {
-	it := new(EntryIterator)
-	it.Serializer = c.Serializer
-	it.StateQueryIteratorInterface, _ = c.Ctx.GetStub().GetQueryResult(query) // or private
-
-	return it, nil
-}
-
-func (c *Collection) GetHistoryForKey(key string) (*HistoricEntryIterator, error) {
-	it := new(HistoricEntryIterator)
-	it.Serializer = c.Serializer
-	it.HistoryQueryIteratorInterface, _ = c.Ctx.GetStub().GetHistoryForKey(key)
-
-	return it, nil
-}
-
-func (c *Collection) GetHash(key string) ([]byte, error) {
-	return c.Ctx.GetStub().GetPrivateDataHash(c.Name, key)
-}
-
-func (c *Collection) PutState(key string, state interface{}) error {
-	return nil
-}
-
-func (c *Collection) DelState(key string, state interface{}) error {
-	return nil
+// GetStates return iterator for accessing stored states
+func (c *Collection) GetStates(query QueryInterface) (*QueryStateIterator, error) {
+	return query.Query(c.Ctx, c.Name)
 }
